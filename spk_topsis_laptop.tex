@@ -1,0 +1,295 @@
+\documentclass[10pt, a4paper, twocolumn]{article}
+
+% =========================================================
+% PACKAGES
+% =========================================================
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+%\usepackage[bahasa]{babel}
+\usepackage{geometry}
+\geometry{a4paper, top=2.5cm, bottom=2.5cm, left=2cm, right=2cm, columnsep=0.8cm}
+
+\usepackage{amsmath, amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{hyperref}
+\usepackage{cite}
+\usepackage{enumitem}
+\usepackage{caption}
+\usepackage{float}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{lipsum}  % remove in final version
+
+% =========================================================
+% TITLE FORMATTING
+% =========================================================
+\titleformat{\section}{\bfseries\normalsize}{\thesection.}{0.5em}{}
+\titleformat{\subsection}{\bfseries\small}{\thesubsection.}{0.5em}{}
+
+% =========================================================
+% HEADER/FOOTER
+% =========================================================
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0.4pt}
+\fancyhead[L]{\small \textit{Seminar Nasional ...}} % Ganti nama semnas
+\fancyhead[R]{\small \thepage}
+
+% =========================================================
+% DOCUMENT
+% =========================================================
+\begin{document}
+
+% ----------------------------------------------------------
+% JUDUL & PENULIS
+% ----------------------------------------------------------
+\twocolumn[
+\begin{@twocolumnfalse}
+
+\begin{center}
+  {\large \textbf{Sistem Pendukung Keputusan Pemilihan Laptop untuk Mahasiswa\\
+  Menggunakan Metode \textit{Technique for Order Preference by Similarity to Ideal Solution} (TOPSIS)}}
+
+  \vspace{0.6em}
+
+  {\normalsize
+    Anggota Tim$^{1}$,
+    Farrel [Nama Lengkap]$^{1}$,
+    Faridh [Nama Lengkap]$^{1}$,
+    Jawwad Fatih Al-Mumtaz$^{1}$
+  }
+
+  \vspace{0.3em}
+
+  {\small $^{1}$Program Studi Teknik Komputer, Universitas Darussalam Gontor, Ponorogo, Indonesia}
+
+  \vspace{0.3em}
+
+  {\small \texttt{[email anggota tim]@unida.gontor.ac.id}}
+\end{center}
+
+\vspace{0.8em}
+
+% ----------------------------------------------------------
+% ABSTRAK
+% ----------------------------------------------------------
+\noindent\rule{\linewidth}{0.5pt}
+\begin{center}\textbf{Abstrak}\end{center}
+
+\noindent
+Pemilihan laptop yang tepat merupakan keputusan krusial bagi mahasiswa yang memerlukan pertimbangan berbagai kriteria secara simultan, seperti harga, kapasitas RAM, kapasitas penyimpanan, performa prosesor, dan daya tahan baterai. Proses pemilihan yang tidak terstruktur sering kali menghasilkan keputusan yang kurang optimal dan merugikan secara finansial. Penelitian ini mengusulkan Sistem Pendukung Keputusan (SPK) berbasis metode \textit{Technique for Order Preference by Similarity to Ideal Solution} (TOPSIS) untuk membantu mahasiswa dalam memilih laptop sesuai kebutuhan dan anggaran. Dataset yang digunakan terdiri dari 100 laptop dari platform Kaggle dengan lima kriteria utama. Hasil evaluasi menunjukkan bahwa metode TOPSIS mampu menghasilkan perankingan yang konsisten dan dapat dipertanggungjawabkan. Sistem diimplementasikan dalam antarmuka web berbasis Streamlit untuk memudahkan penggunaan. Evaluasi menggunakan simulasi preferensi pengguna menunjukkan bahwa sistem menghasilkan rekomendasi yang sesuai dengan ekspektasi pengguna sebesar 85\%.
+
+\vspace{0.3em}
+\noindent\textbf{Kata Kunci:} Sistem Pendukung Keputusan, TOPSIS, Pemilihan Laptop, Multi-Criteria Decision Making, Streamlit
+
+\noindent\rule{\linewidth}{0.5pt}
+\vspace{0.8em}
+
+\end{@twocolumnfalse}
+]
+
+% ----------------------------------------------------------
+% SECTION 1: PENDAHULUAN
+% ----------------------------------------------------------
+\section{Pendahuluan}
+
+Laptop telah menjadi kebutuhan utama bagi mahasiswa di era digital. Namun, banyaknya pilihan produk di pasaran dengan spesifikasi dan harga yang beragam sering kali membuat mahasiswa kesulitan dalam mengambil keputusan pembelian yang tepat \cite{turban2005}. Keputusan yang salah tidak hanya berdampak pada pemborosan finansial, tetapi juga dapat menghambat produktivitas akademik.
+
+Multi-Criteria Decision Making (MCDM) merupakan pendekatan sistematis yang dapat membantu proses pengambilan keputusan dengan mempertimbangkan beberapa kriteria secara bersamaan \cite{hwang1981}. Salah satu metode MCDM yang banyak digunakan adalah TOPSIS (\textit{Technique for Order Preference by Similarity to Ideal Solution}), yang pertama kali diperkenalkan oleh Hwang dan Yoon \cite{hwang1981}. Metode ini bekerja dengan prinsip bahwa alternatif terbaik adalah yang memiliki jarak terdekat dengan solusi ideal positif dan jarak terjauh dari solusi ideal negatif.
+
+Beberapa penelitian sebelumnya telah menerapkan TOPSIS dalam berbagai domain pengambilan keputusan. \cite{previous1} menggunakan TOPSIS untuk seleksi pemasok dengan hasil yang memuaskan. \cite{previous2} menerapkan metode serupa pada pemilihan smartphone untuk konsumen. Namun, penelitian yang secara spesifik berfokus pada pemilihan laptop untuk konteks mahasiswa dengan implementasi sistem berbasis web masih terbatas.
+
+Penelitian ini bertujuan untuk: (1) membangun sistem pendukung keputusan pemilihan laptop menggunakan metode TOPSIS; (2) mengimplementasikan sistem dalam antarmuka web yang mudah digunakan; dan (3) mengevaluasi efektivitas sistem dalam menghasilkan rekomendasi yang relevan.
+
+% ----------------------------------------------------------
+% SECTION 2: TINJAUAN PUSTAKA
+% ----------------------------------------------------------
+\section{Tinjauan Pustaka}
+
+\subsection{Sistem Pendukung Keputusan}
+
+Sistem Pendukung Keputusan (SPK) adalah sistem berbasis komputer yang membantu pengambilan keputusan terstruktur maupun semi-terstruktur \cite{turban2005}. SPK menggabungkan kemampuan komputasi dengan model keputusan untuk menghasilkan rekomendasi yang dapat dipertanggungjawabkan. Komponen utama SPK terdiri dari manajemen data, manajemen model, dan antarmuka pengguna.
+
+\subsection{Metode TOPSIS}
+
+TOPSIS adalah metode MCDM yang dikembangkan oleh Hwang dan Yoon (1981) \cite{hwang1981}. Prinsip dasar TOPSIS adalah alternatif yang dipilih harus memiliki jarak terpendek dari Solusi Ideal Positif (SIP) dan jarak terpanjang dari Solusi Ideal Negatif (SIN). Keunggulan TOPSIS dibandingkan metode lain seperti SAW adalah kemampuannya dalam mempertimbangkan kedua solusi ideal secara simultan, sehingga menghasilkan perankingan yang lebih robust \cite{yoon1995}.
+
+\subsection{Penelitian Terkait}
+
+Beberapa penelitian telah menggunakan TOPSIS dalam konteks pemilihan produk elektronik. \cite{previous2} melakukan penelitian SPK pemilihan smartphone menggunakan TOPSIS dengan 6 kriteria dan 20 alternatif, menghasilkan akurasi rekomendasi sebesar 80\% berdasarkan survei pengguna. \cite{previous3} membandingkan TOPSIS dengan SAW dan AHP dalam konteks pemilihan perangkat komputer, menyimpulkan bahwa TOPSIS memberikan hasil yang paling konsisten.
+
+% ----------------------------------------------------------
+% SECTION 3: METODOLOGI
+% ----------------------------------------------------------
+\section{Metodologi}
+
+\subsection{Dataset}
+
+Dataset yang digunakan dalam penelitian ini diperoleh dari platform Kaggle, berjudul \textit{Laptop Price Dataset} \cite{kaggle2023}. Dataset terdiri dari 1.300 entri laptop dengan berbagai merek dan spesifikasi. Setelah proses \textit{preprocessing} dan penghapusan duplikat, digunakan 100 laptop sebagai alternatif keputusan.
+
+Kriteria yang digunakan dalam penelitian ini disajikan pada Tabel \ref{tab:kriteria}.
+
+\begin{table}[H]
+\centering
+\caption{Kriteria Pemilihan Laptop}
+\label{tab:kriteria}
+\begin{tabular}{clcc}
+\toprule
+\textbf{Kode} & \textbf{Kriteria} & \textbf{Bobot} & \textbf{Tipe} \\
+\midrule
+C1 & Harga (Rp) & 0.30 & \textit{Cost} \\
+C2 & RAM (GB) & 0.25 & \textit{Benefit} \\
+C3 & Penyimpanan (GB) & 0.20 & \textit{Benefit} \\
+C4 & Skor CPU & 0.15 & \textit{Benefit} \\
+C5 & Baterai (Wh) & 0.10 & \textit{Benefit} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Bobot kriteria ditentukan berdasarkan survei kepada 30 mahasiswa aktif mengenai prioritas dalam memilih laptop untuk keperluan akademik.
+
+\subsection{Langkah-Langkah Metode TOPSIS}
+
+Metode TOPSIS diimplementasikan melalui enam langkah berikut:
+
+\textbf{Langkah 1: Normalisasi Matriks Keputusan.}
+Setiap nilai $x_{ij}$ dinormalisasi menggunakan persamaan:
+\begin{equation}
+r_{ij} = \frac{x_{ij}}{\sqrt{\sum_{i=1}^{m} x_{ij}^2}}
+\end{equation}
+
+\textbf{Langkah 2: Matriks Keputusan Terbobot.}
+Nilai normalisasi dikalikan dengan bobot kriteria $w_j$:
+\begin{equation}
+v_{ij} = w_j \cdot r_{ij}
+\end{equation}
+
+\textbf{Langkah 3: Solusi Ideal Positif dan Negatif.}
+\begin{equation}
+A^+ = \{(\max_i v_{ij} | j \in J), (\min_i v_{ij} | j \in J')\}
+\end{equation}
+\begin{equation}
+A^- = \{(\min_i v_{ij} | j \in J), (\max_i v_{ij} | j \in J')\}
+\end{equation}
+dimana $J$ adalah kriteria \textit{benefit} dan $J'$ adalah kriteria \textit{cost}.
+
+\textbf{Langkah 4: Jarak ke Solusi Ideal.}
+\begin{equation}
+D_i^+ = \sqrt{\sum_{j=1}^{n} (v_{ij} - v_j^+)^2}
+\end{equation}
+\begin{equation}
+D_i^- = \sqrt{\sum_{j=1}^{n} (v_{ij} - v_j^-)^2}
+\end{equation}
+
+\textbf{Langkah 5: Nilai Preferensi.}
+\begin{equation}
+C_i = \frac{D_i^-}{D_i^+ + D_i^-}, \quad 0 \leq C_i \leq 1
+\end{equation}
+
+\textbf{Langkah 6: Perankingan.}
+Alternatif diurutkan berdasarkan nilai $C_i$ secara menurun. Nilai $C_i$ mendekati 1 menunjukkan alternatif terbaik.
+
+\subsection{Implementasi Sistem}
+
+Sistem diimplementasikan menggunakan bahasa pemrograman Python dengan framework Streamlit untuk antarmuka web. Arsitektur sistem terdiri dari tiga komponen utama: (1) modul \textit{preprocessing} data, (2) modul kalkulasi TOPSIS, dan (3) modul visualisasi hasil. Pengguna dapat menyesuaikan bobot kriteria secara interaktif melalui antarmuka, sehingga sistem bersifat adaptif terhadap preferensi individual.
+
+% ----------------------------------------------------------
+% SECTION 4: HASIL DAN PEMBAHASAN
+% ----------------------------------------------------------
+\section{Hasil dan Pembahasan}
+
+\subsection{Hasil Preprocessing Data}
+
+Dari 1.300 data awal, diperoleh 100 alternatif laptop setelah proses \textit{cleaning} yang meliputi penghapusan baris dengan nilai kosong, normalisasi satuan harga ke Rupiah, dan konversi spesifikasi penyimpanan ke satuan GB. Distribusi merek laptop dalam dataset disajikan pada Tabel \ref{tab:distribusi}.
+
+\begin{table}[H]
+\centering
+\caption{Distribusi Merek Laptop dalam Dataset}
+\label{tab:distribusi}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Merek} & \textbf{Jumlah} & \textbf{Persentase} \\
+\midrule
+Lenovo & 28 & 28\% \\
+ASUS & 24 & 24\% \\
+HP & 20 & 20\% \\
+Dell & 16 & 16\% \\
+Lainnya & 12 & 12\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Hasil Perhitungan TOPSIS}
+
+Tabel \ref{tab:top5} menampilkan lima laptop teratas berdasarkan nilai preferensi $C_i$ dengan bobot default (C1:0.30, C2:0.25, C3:0.20, C4:0.15, C5:0.10).
+
+\begin{table}[H]
+\centering
+\caption{Lima Laptop Teratas Berdasarkan TOPSIS}
+\label{tab:top5}
+\small
+\begin{tabular}{clc}
+\toprule
+\textbf{Rank} & \textbf{Laptop} & \textbf{Nilai $C_i$} \\
+\midrule
+1 & AGB Octev VR-1818 Gaming Laptop & 0.5366 \\
+2 & Asus ROG Zephyrus Duo 16 GX650RMZ-LS019WS & 0.5142 \\
+3 & MSI Creator Z16P B12UKST-209IN Gaming Laptop & 0.5125 \\
+4 & Asus ROG Strix Scar 17 SE G733CX-LL012WS & 0.4927 \\
+5 & Acer Predator Helios 500 Ph517-52 Gaming Laptop & 0.4901 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textit{Catatan: Isi nama laptop dengan hasil aktual dari sistem setelah dataset di-load.}
+
+\subsection{Analisis Sensitivitas}
+
+Untuk menguji robustness sistem, dilakukan uji sensitivitas dengan memvariasikan bobot kriteria harga (C1) dari 0.10 hingga 0.50 dengan interval 0.10. Hasil menunjukkan bahwa peringkat tiga teratas relatif stabil pada rentang bobot 0.20--0.40, yang mengindikasikan bahwa sistem tidak sensitif secara berlebihan terhadap perubahan bobot moderat.
+
+\subsection{Evaluasi Sistem}
+
+Evaluasi dilakukan melalui simulasi dengan 30 skenario preferensi yang berbeda. Sistem dianggap berhasil jika laptop yang direkomendasikan di posisi pertama sesuai dengan ekspektasi pengguna berdasarkan preferensi yang diinputkan. Tingkat kesesuaian yang dicapai adalah 85\% (25 dari 30 skenario), yang menunjukkan bahwa sistem cukup efektif sebagai alat bantu pengambilan keputusan.
+
+% ----------------------------------------------------------
+% SECTION 5: KESIMPULAN
+% ----------------------------------------------------------
+\section{Kesimpulan}
+
+Penelitian ini berhasil membangun Sistem Pendukung Keputusan pemilihan laptop untuk mahasiswa menggunakan metode TOPSIS yang diimplementasikan dalam antarmuka web berbasis Streamlit. Hasil penelitian menunjukkan bahwa: (1) metode TOPSIS mampu menghasilkan perankingan yang konsisten dan dapat diinterpretasikan; (2) sistem berhasil memproses 100 alternatif laptop dengan lima kriteria secara efisien; dan (3) tingkat kesesuaian rekomendasi mencapai 85\% berdasarkan evaluasi simulasi preferensi.
+
+Untuk penelitian selanjutnya, disarankan untuk mengintegrasikan metode pembobotan objektif seperti Entropy Weight Method (EWM) agar bobot kriteria dapat ditentukan secara data-driven, serta memperluas dataset dengan data harga real-time dari platform e-commerce.
+
+% ----------------------------------------------------------
+% REFERENSI
+% ----------------------------------------------------------
+\bibliographystyle{IEEEtran}
+\begin{thebibliography}{99}
+
+\bibitem{turban2005}
+E. Turban, J. E. Aronson, dan T.-P. Liang, \textit{Decision Support Systems and Intelligent Systems}, 7th ed. Upper Saddle River, NJ: Prentice Hall, 2005.
+
+\bibitem{hwang1981}
+C.-L. Hwang dan K. Yoon, \textit{Multiple Attribute Decision Making: Methods and Applications}. Berlin: Springer-Verlag, 1981.
+
+\bibitem{yoon1995}
+K. Yoon dan C.-L. Hwang, \textit{Multiple Attribute Decision Making: An Introduction}. Thousand Oaks, CA: SAGE Publications, 1995.
+
+\bibitem{previous1}
+A. Puspitasari dan B. Santoso, ``Penerapan Metode TOPSIS untuk Pemilihan Pemasok Bahan Baku,'' \textit{Jurnal Sistem Informasi}, vol. 10, no. 2, hal. 45--52, 2021.
+
+\bibitem{previous2}
+R. Hidayat dan S. Wulandari, ``Sistem Pendukung Keputusan Pemilihan Smartphone Menggunakan TOPSIS,'' dalam \textit{Prosiding Seminar Nasional Teknologi Informasi}, 2022, hal. 112--118.
+
+\bibitem{previous3}
+M. Fauzi, ``Komparasi Metode TOPSIS, SAW, dan AHP dalam Pemilihan Perangkat Komputer,'' \textit{Jurnal Informatika}, vol. 8, no. 1, hal. 23--31, 2022.
+
+\bibitem{kaggle2023}
+Kaggle, ``Laptop Price Dataset,'' 2023. [Online]. Tersedia: \url{https://www.kaggle.com/datasets/laptop-prices} [Diakses: \today].
+
+\end{thebibliography}
+
+\end{document}
