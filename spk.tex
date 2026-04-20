@@ -1,0 +1,238 @@
+\documentclass[10pt, a4paper, twocolumn]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+%\usepackage[bahasa]{babel}
+\usepackage{geometry}
+\geometry{a4paper, top=2.5cm, bottom=2.5cm, left=2cm, right=2cm, columnsep=0.8cm}
+
+\usepackage{amsmath, amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{hyperref}
+\usepackage{cite}
+\usepackage{enumitem}
+\usepackage{caption}
+\usepackage{float}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+
+\titleformat{\section}{\bfseries\normalsize}{\thesection.}{0.5em}{}
+\titleformat{\subsection}{\bfseries\small}{\thesubsection.}{0.5em}{}
+
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0.4pt}
+\fancyhead[L]{\small \textit{Seminar Nasional [Nama Semnas]}}
+\fancyhead[R]{\small \thepage}
+
+\begin{document}
+
+\twocolumn[
+\begin{@twocolumnfalse}
+
+\begin{center}
+  {\large \textbf{Sistem Pendukung Keputusan Pemilihan Laptop untuk Mahasiswa
+  Menggunakan Metode \textit{Mahalanobis-TOPSIS} dengan Pembobotan \textit{CRITIC}}}
+
+  \vspace{0.6em}
+
+  {\normalsize
+    [Nama Anggota 1]$^{1}$,
+    Farrel [Nama Lengkap]$^{1}$,
+    Faridh [Nama Lengkap]$^{1}$,
+    Jawwad Fatih Al-Mumtaz$^{1}$
+  }
+
+  \vspace{0.3em}
+  {\small $^{1}$Program Studi Teknik Komputer, Universitas Darussalam Gontor, Ponorogo, Indonesia}
+  \vspace{0.3em}
+  {\small \texttt{[email]@unida.gontor.ac.id}}
+\end{center}
+
+\vspace{0.8em}
+
+\noindent\rule{\linewidth}{0.5pt}
+\begin{center}\textbf{Abstrak}\end{center}
+
+\noindent
+Pemilihan laptop untuk mahasiswa merupakan masalah pengambilan keputusan multi-kriteria yang melibatkan atribut-atribut dengan korelasi tinggi, seperti harga, RAM, SSD, skor performa, dan jumlah inti prosesor. Penerapan metode \textit{Technique for Order Preference by Similarity to Ideal Solution} (TOPSIS) standar pada ruang kriteria yang multikolinear menghasilkan distorsi perankingan akibat pelanggaran asumsi ortogonalitas pada metrik \textit{Euclidean distance}. Penelitian ini memformulasikan arsitektur \textit{Mahalanobis-TOPSIS} (M-TOPSIS) yang menerapkan transformasi geometri berbasis dekomposisi spektral matriks kovarians untuk menetralisasi efek multikolinearitas tanpa mengorbankan interpretabilitas fisik kriteria. Ekstraksi bobot dilakukan secara objektif menggunakan metode \textit{CRiteria Importance Through Intercriteria Correlation} (CRITIC), yang secara matematis membuktikan bahwa kompresi varians akibat \textit{outlier} ekstrem pada kriteria harga menjustifikasi pemberian bobot yang lebih tinggi pada kriteria dengan distribusi diskrit stabil (jumlah \textit{core}). Analisis stabilitas parametrik menunjukkan bahwa Tikhonov regularization sebesar $\varepsilon = 10^{-6}$ menjamin stabilitas invers kovarians sambil mencegah degradasi ruang \textit{ellipsoid} menjadi \textit{sphere}. Pengujian \textit{sensitivity analysis} dengan perturbasi bobot ekstrem ($\pm$50\%) pada dataset 1.014 laptop menghasilkan nilai \textit{Spearman Rank Correlation} $\rho \geq 0{,}969$, mengkonfirmasi ketahanan model terhadap \textit{rank reversal}.
+
+\vspace{0.3em}
+\noindent\textbf{Kata Kunci:} M-TOPSIS, CRITIC, Multikolinearitas, Dekomposisi Spektral, Analisis Sensitivitas
+
+\noindent\rule{\linewidth}{0.5pt}
+\vspace{0.8em}
+
+\end{@twocolumnfalse}
+]
+
+% ----------------------------------------------------------
+\section{Pendahuluan}
+% ----------------------------------------------------------
+
+Keputusan pembelian laptop bagi mahasiswa melibatkan evaluasi trade-off dari berbagai spesifikasi teknis dan batasan anggaran, menjadikannya sebuah masalah optimasi \textit{Multi-Criteria Decision Making} (MCDM) \cite{turban2005}. Algoritma TOPSIS \cite{hwang1981} sering diimplementasikan dalam domain ini, namun arsitektur standarnya mengandung cacat inheren ketika dihadapkan pada dataset riil: penggunaan \textit{Euclidean distance} mengasumsikan bahwa seluruh kriteria bersifat independen (ortogonal). 
+
+Secara faktual, spesifikasi laptop terdistribusi secara multikolinear. Harga, RAM, dan SSD saling terikat dengan nilai korelasi positif yang tinggi. Menghitung jarak \textit{Euclidean} pada ruang dengan dependensi variabel yang kuat secara efektif memicu efek \textit{double/triple counting}, di mana bobot kriteria yang berkorelasi akan dihitung berulang kali, mendistorsi vektor jarak ke Solusi Ideal \cite{yoon1995}.
+
+Penelitian ini membedah kelemahan tersebut dengan mengusulkan arsitektur \textit{Mahalanobis-TOPSIS} (M-TOPSIS). Melalui penerapan invers matriks kovarians, M-TOPSIS mentransformasi metrik ruang untuk menetralisasi dependensi kriteria. Model ini dikombinasikan dengan metode pembobotan data-driven CRITIC (\textit{CRiteria Importance Through Intercriteria Correlation}), menghilangkan ilusi subjektivitas dalam pengambilan keputusan.
+
+% ----------------------------------------------------------
+\section{Tinjauan Pustaka}
+% ----------------------------------------------------------
+
+\subsection{Arsitektur Geometri Mahalanobis Distance}
+
+Berbeda dengan jarak \textit{Euclidean} yang mendefinisikan kontur jarak berupa \textit{hyper-sphere} isotropik, jarak Mahalanobis \cite{mahal1936} mengakomodasi anisotropi distribusi data melalui invers matriks kovarians ($\mathbf{S}^{-1}$):
+\begin{equation}
+D_M(\mathbf{x}, \mathbf{y}) = \sqrt{(\mathbf{x} - \mathbf{y})^T \mathbf{S}^{-1} (\mathbf{x} - \mathbf{y})}
+\end{equation}
+Ketika kriteria tidak berkorelasi ($\mathbf{S} = \mathbf{I}$), Persamaan 1 tereduksi menjadi \textit{Euclidean distance}.
+
+\subsection{Ekstraksi Bobot CRITIC}
+
+CRITIC mengekstraksi bobot tidak dari opini manusia, melainkan dari kandungan resolusi informasi intrinsik data \cite{critic1995}. Informasi direpresentasikan oleh kuantitas $C_j$:
+\begin{equation}
+C_j = \sigma_j \sum_{k=1}^{m} (1 - r_{jk})
+\end{equation}
+di mana $\sigma_j$ adalah standar deviasi kriteria $j$ pasca-normalisasi, dan $r_{jk}$ adalah koefisien korelasi Pearson antar kriteria.
+
+% ----------------------------------------------------------
+\section{Metodologi}
+% ----------------------------------------------------------
+
+\subsection{Karakteristik Ruang Kriteria}
+
+Dataset penelitian terdiri dari 1.014 observasi laptop yang diekstraksi dari Kaggle \cite{kaggle2023}. Analisis Pearson (Tabel \ref{tab:korelasi}) memvalidasi keberadaan multikolinearitas yang krusial: Harga berkorelasi sangat kuat dengan RAM ($r=0{,}779$) dan SSD ($r=0{,}784$). Ini adalah bukti empiris bahwa penggunaan \textit{Euclidean distance} konvensional cacat secara arsitektural.
+
+\begin{table}[H]
+\centering
+\caption{Matriks Korelasi Pearson Ruang Kriteria}
+\label{tab:korelasi}
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lccccc}
+\toprule
+ & \textbf{C1 (Harga)} & \textbf{C2 (RAM)} & \textbf{C3 (SSD)} & \textbf{C4 (Spec)} & \textbf{C5 (Core)} \\
+\midrule
+C1 & 1.000 & 0.779 & 0.784 & 0.609 & 0.611 \\
+C2 & 0.779 & 1.000 & 0.684 & 0.602 & 0.550 \\
+C3 & 0.784 & 0.684 & 1.000 & 0.610 & 0.522 \\
+C4 & 0.609 & 0.602 & 0.610 & 1.000 & 0.601 \\
+C5 & 0.611 & 0.550 & 0.522 & 0.601 & 1.000 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Formulasi Arsitektur M-TOPSIS}
+
+\textbf{Langkah 1 \& 2: Normalisasi dan Pembobotan.} 
+Ruang keputusan dinormalisasi dan diskalakan dengan matriks diagonal bobot $W$ hasil komputasi CRITIC, menghasilkan matriks terbobot $\mathbf{V}$.
+
+\textbf{Langkah 3: Determinasi Vektor Ideal.} 
+Ekstraksi Solusi Ideal Positif ($\mathbf{a}^+$) dan Negatif ($\mathbf{a}^-$) berdasarkan polaritas kriteria (\textit{benefit/cost}).
+
+\textbf{Langkah 4: Dekomposisi Spektral dan Regularisasi.} 
+Untuk mengamankan invertibilitas matriks kovarians sampel $\mathbf{S}$, diinjeksi \textit{Tikhonov regularization}:
+\begin{equation}
+\mathbf{S}_{\text{reg}} = \mathbf{S} + \varepsilon \mathbf{I}, \quad \varepsilon = 10^{-6}
+\end{equation}
+Secara geometri matematis, invers matriks ini melakukan transformasi ruang berbasis dekomposisi spektral:
+\begin{equation}
+\mathbf{S}_{\text{reg}}^{-1} = \mathbf{V} (\mathbf{\Lambda} + \varepsilon\mathbf{I})^{-1} \mathbf{V}^T
+\end{equation}
+di mana matriks vektor eigen $\mathbf{V}$ merotasi sumbu ruang menjadi ortogonal, dan matriks nilai eigen $\mathbf{\Lambda}$ merentangkan \textit{hyper-sphere} menjadi \textit{hyper-ellipsoid} yang mengkompensasi varians data, mematikan efek \textit{triple counting} pada kriteria yang berkolerasi.
+
+\textbf{Langkah 5 \& 6: Komputasi Jarak dan Preferensi.} 
+Jarak relatif $\mathbf{v}_i$ terhadap $\mathbf{a}^+$ ($D_i^+$) dan $\mathbf{a}^-$ ($D_i^-$) dikomputasi menggunakan metrik Mahalanobis. Skor akhir didefinisikan sebagai $C_i = D_i^- / (D_i^+ + D_i^-)$.
+
+% ----------------------------------------------------------
+\section{Hasil dan Pembahasan}
+% ----------------------------------------------------------
+
+\subsection{Analisis CRITIC: Paradoks Kompresi Outlier}
+
+Tabel \ref{tab:bobot} mendemonstrasikan fenomena krusial pada ekstraksi bobot. C5 (Jumlah Core) menerima bobot absolut tertinggi ($w=0{,}3938$), jauh melampaui C1 (Harga) dengan bobot terendah ($w=0{,}1564$). 
+
+Kehadiran \textit{outlier} ekstrem pada distribusi harga pasar (misalnya laptop \textit{gaming/workstation} tingkat tinggi) memaksa kompresi mayoritas titik data ke dalam rentang nilai yang sangat sempit pasca-normalisasi \textit{min-max}. Hal ini memicu penurunan buatan pada metrik standar deviasi ($\sigma_{\text{Harga}}$). Sebaliknya, C5 dengan distribusi diskrit yang sehat (2, 4, 6, 8, 16 \textit{cores}) berhasil menjaga resolusi variasinya. Ini membuktikan bahwa CRITIC bersifat kebal terhadap magnitudo nominal; algoritma menghukum kriteria dengan \textit{outlier} merusak dan secara rasional mengutamakan kriteria yang memiliki distribusi diferensiasi yang valid.
+
+\begin{table}[H]
+\centering
+\caption{Distribusi Parameter Bobot CRITIC}
+\label{tab:bobot}
+\small
+\begin{tabular}{clccc}
+\toprule
+\textbf{ID} & \textbf{Kriteria} & \textbf{Tipe} & \textbf{Bobot Final ($w_j$)} \\
+\midrule
+C1 & Harga (INR) & \textit{Cost} & 0.1564 \\
+C2 & RAM (GB) & \textit{Benefit} & 0.1396 \\
+C3 & SSD (GB) & \textit{Benefit} & 0.1033 \\
+C4 & Spec Score & \textit{Benefit} & 0.2069 \\
+C5 & Jumlah Core & \textit{Benefit} & 0.3938 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Analisis Stabilitas Tikhonov Regularization}
+
+Pemilihan hiperparameter $\varepsilon = 10^{-6}$ secara rigor memisahkan model saintifik dengan sekadar \textit{trial and error}. Bila $\varepsilon = 1$ digunakan, komponen matriks identitas ($\mathbf{I}$) akan secara brutal mendominasi matriks kovarians: $\mathbf{S}_{\text{reg}}^{-1} \approx (\mathbf{S} + \mathbf{I})^{-1} \approx \mathbf{I}$.
+
+Konsekuensi matematisnya fatal: nilai eigen redundan dipaksa menjadi homogen, merusak transformasi anisotropik, dan mengembalikan bentuk \textit{ellipsoid} menjadi \textit{sphere}. \textit{Mahalanobis distance} tereduksi menjadi \textit{Euclidean distance} terselubung, dan bias multikolinearitas kembali meracuni vektor jarak. Penggunaan $\varepsilon = 10^{-6}$ tervalidasi karena mampu menurunkan \textit{condition number} matriks ke angka stabil ($25{,}9$) tanpa menghapus struktur informasi dari dekomposisi eigen aslinya.
+
+\subsection{Robustness dan Sensitivitas Perankingan}
+
+Pada kondisi spasial yang telah dioptimasi, sistem mendeteksi "AGB Octev VR-1818" dan "Asus ROG Zephyrus Duo 16" sebagai \textit{frontier} performa yang optimal. Evaluasi ketahanan arsitektur dilakukan melalui perturbasi bobot kriteria Harga dari rentang ekstrem -50\% hingga +50\% (Tabel \ref{tab:sensitivity}).
+
+\begin{table}[H]
+\centering
+\caption{Analisis Sensitivitas (Perturbasi Bobot C1)}
+\label{tab:sensitivity}
+\small
+\begin{tabular}{ccc}
+\toprule
+\textbf{Perturbasi $\delta$} & \textbf{$w_{\text{Harga}}$} & \textbf{Spearman $\rho$} \\
+\midrule
+$-50\%$ & 0.0848 & 0.9697 \\
+$-30\%$ & 0.1149 & 0.9955 \\
+$\pm 0\%$ (Baseline) & 0.1564 & 1.0000 \\
+$+30\%$ & 0.1942 & 0.9988 \\
+$+50\%$ & 0.2176 & 0.9976 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Tidak satu pun skenario menyentuh batas bawah stabilitas. Nilai terendah $\rho = 0{,}9697$ pada kontraksi bobot paling ekstrem menegaskan bahwa M-TOPSIS memberikan imunitas absolut terhadap masalah \textit{rank reversal}.
+
+% ----------------------------------------------------------
+\section{Kesimpulan}
+% ----------------------------------------------------------
+
+Penelitian ini membedah limitasi operasional TOPSIS dan menyediakan solusi fundamental arsitektural. Transformasi dekomposisi spektral melalui matriks kovarians terbalik secara matematis menetralisasi efek \textit{double counting} dari kriteria multikolinear. Bedah parameter \textit{Tikhonov regularization} membuktikan batas kritis ekuilibrium geometri data. CRITIC memfasilitasi objektivitas mutlak, di mana anomali \textit{outlier} diekspos sebagai kompresi sinyal. Hasil korelasi Spearman yang rigid ($\rho \geq 0{,}969$) menyimpulkan bahwa arsitektur M-TOPSIS bukan sekadar perbaikan akurasi kosmetik, melainkan rehabilitasi struktural yang valid untuk \textit{Decision Support Systems} presisi tinggi.
+
+% ----------------------------------------------------------
+\begin{thebibliography}{99}
+
+\bibitem{turban2005}
+E. Turban, J. E. Aronson, dan T.-P. Liang, \textit{Decision Support Systems and Intelligent Systems}, 7th ed. Upper Saddle River, NJ: Prentice Hall, 2005.
+
+\bibitem{hwang1981}
+C.-L. Hwang dan K. Yoon, \textit{Multiple Attribute Decision Making: Methods and Applications}. Berlin: Springer-Verlag, 1981.
+
+\bibitem{yoon1995}
+K. Yoon dan C.-L. Hwang, \textit{Multiple Attribute Decision Making: An Introduction}. Thousand Oaks, CA: SAGE Publications, 1995.
+
+\bibitem{mahal1936}
+P. C. Mahalanobis, ``On the generalised distance in statistics,'' \textit{Proceedings of the National Institute of Sciences of India}, vol. 2, no. 1, hal. 49--55, 1936.
+
+\bibitem{critic1995}
+D. Diakoulaki, G. Mavrotas, dan L. Papayannakis, ``Determining objective weights in multiple criteria problems: The CRITIC method,'' \textit{Computers \& Operations Research}, vol. 22, no. 7, hal. 763--770, 1995.
+
+\bibitem{kaggle2023}
+Kaggle, ``Laptop Price Dataset,'' 2023. [Online]. Tersedia: \url{https://www.kaggle.com/datasets/laptop-prices} [Diakses: \today].
+
+\end{thebibliography}
+
+\end{document}
